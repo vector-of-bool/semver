@@ -37,13 +37,11 @@ TEST_CASE("Parsing") {
 
 TEST_CASE("Compare versions") {
     using semver::order;
-    struct case_ {
+    struct {
         std::string_view lhs;
         std::string_view rhs;
         order            expect_ord;
-    };
-
-    case_ cases[] = {
+    } cases[] = {
         {"1.2.3", "1.2.3", order::equivalent},
         {"1.2.3-alpha", "1.2.3-alpha", order::equivalent},
         {"1.2.3-alpha", "1.2.3", order::less},
@@ -51,7 +49,7 @@ TEST_CASE("Compare versions") {
         {"1.2.3-alpha.1", "1.2.3-alpha.2", order::less},
         {"1.2.3-alpha.4", "1.2.3-alpha.2", order::greater},
         {"1.2.1", "1.2.2-alpha.2", order::less},
-        {"1.2.1", "1.2.1+foo", order::equivalent}, // Build metadata has no effect
+        {"1.2.1", "1.2.1+foo", order::equivalent},  // Build metadata has no effect
     };
 
     for (auto [lhs, rhs, exp] : cases) {

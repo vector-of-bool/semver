@@ -43,7 +43,7 @@ struct version {
     bool        is_prerelease() const noexcept { return !prerelease.empty(); }
 
 #define DEF_OP(op, expr)                                                                           \
-    inline friend bool operator op(const version& lhs, const version& rhs) noexcept {                  \
+    inline friend bool operator op(const version& lhs, const version& rhs) noexcept {              \
         auto o = compare(lhs, rhs);                                                                \
         return (expr);                                                                             \
     }                                                                                              \
