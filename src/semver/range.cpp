@@ -178,7 +178,7 @@ std::optional<range> range::union_(const range& other) const noexcept {
          * _unrepresentable_ in semver::range, but that such a version range is semantically
          * problematic. The incrementing of a component of a version numbers either breaking or not:
          * We purposefully do not support a concept of "Major versions [N, N+X) are API compatible,
-         * but not [N, N+X+1)."
+         * but not [N+X, N+X+1)."
          *
          * The use of `>=` above is purposeful!
          */
@@ -203,34 +203,26 @@ std::optional<range> range::union_(const range& other) const noexcept {
 }
 
 bool range::includes(const range& other) const noexcept {
-    auto  other_mode = other._kind;
-    auto& other_ver  = other.base_version();
+    auto  other_kind    = other._kind;
+    auto& other_version = other.base_version();
+    auto& this_version  = base_version();
 
-    if (other_ver < _base_version) {
+    if (other_version < this_version) {
         // Other version cannot possibly be a subset.
         return false;
     }
 
+    // Known: other_verison >= this_version
     if (_kind == anything_greater) {
-        return other_ver >= base_version();
+        return true;
     }
-    if (_kind == same_major_version) {
-        if (other_mode == anything_greater) {
-            return false;
-        }
-        return satisfied_by(other_ver);
+    if (other_kind == anything_greater) {
+        return false;
     }
-    if (_kind == same_minor_version) {
-        if (other_mode == anything_greater || other_mode == same_major_version) {
-            return false;
-        }
-        return satisfied_by(other_ver);
-    }
-    if (_kind == range::exact) {
-        return other_mode == range::exact && other_ver == _base_version;
-    }
-    assert(false && "Unreachable");
-    std::terminate();
+
+    // Both finite ranges. Our bottom is below the other. We completely enclose
+    // the other if our top is at least as great as the other's
+    return first_bad_version() >= other.first_bad_version();
 }
 
 bool range::overlaps(const range& other) const noexcept {
