@@ -191,6 +191,8 @@ TEST_CASE("Range difference") {
         {"^1.2.3", "^0.3.4", std::nullopt, "^1.2.3"},
         {"~1.2.4", "^1.1.4", std::nullopt, std::nullopt},
         {"~1.2.4", "^1.2.6", "=1.2.4", std::nullopt},
+        {"+1.2.3", "^3.0.0", "^1.2.3", "+4.0.0"},
+        {"^4.3.8", "+4.6.4", "~4.3.8", std::nullopt},
     }));
     INFO("Check difference of '" << left_str << "' and '" << right_str << "'");
     auto left            = semver::range::parse(left_str);

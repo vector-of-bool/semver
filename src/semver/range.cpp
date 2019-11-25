@@ -221,7 +221,8 @@ std::optional<range> range::union_(const range& other) const noexcept {
 namespace {
 
 std::optional<range> diff_before(const range& self, const range& other) noexcept {
-    assert(self.first_bad_version() > other.base_version());
+    assert(self.kind() == range::anything_greater
+           || self.first_bad_version() > other.base_version());
     if (self.base_version() >= other.base_version()) {
         // Nothing below
         return std::nullopt;
@@ -249,6 +250,14 @@ std::optional<range> diff_before(const range& self, const range& other) noexcept
 }
 
 std::optional<range> diff_after(const range& self, const range& other) noexcept {
+    if (other.kind() == range::anything_greater) {
+        // Nothing can land above
+        return std::nullopt;
+    }
+    if (self.kind() == range::anything_greater) {
+        return range(other.first_bad_version(), range::anything_greater);
+    }
+
     assert(self.base_version() < other.first_bad_version());
     if (self.first_bad_version() <= other.first_bad_version()) {
         // Nothing above
