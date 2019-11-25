@@ -2,30 +2,27 @@
 
 #include <catch2/catch.hpp>
 
-TEST_CASE("Parse a version spec string") {
-    auto spec = semver::range::parse("1.2.3");
-    CHECK(spec.kind() == semver::range::exact);
-}
+TEST_CASE("Parse a version spec string") { auto spec = semver::range::parse("1.2.3"); }
 
 TEST_CASE("Parse an asterisk") {
     auto spec = semver::range::parse("*");
-    CHECK(spec.base_version() == semver::version{0, 0, 0});
+    CHECK(spec.low() == semver::version{0, 0, 0});
 }
 
 TEST_CASE("Check version compatibility") {
     struct case_ {
         std::string_view version;
         std::string_view spec;
-        bool             satisfied;
+        bool             expect_compatible;
     };
-    auto [version_str, spec_str, satisfied] = GENERATE(Catch::Generators::values<case_>({
+    auto [version_str, range_str, expect_satisfied] = GENERATE(Catch::Generators::values<case_>({
         {"1.2.3", "*", true},
         {"1.2.3", "1.2.3", true},
         {"1.2.3", "=1.2.3", true},
         {"1.2.3", "+1.2.3", true},
         {"1.2.3", "+1.2.4", false},
         {"1.2.3-alpha", "+1.2.3", false},
-        {"1.2.3-alpha", "+1.2.0", false},
+        {"1.2.3-alpha", "+1.2.0", true},
         {"1.2.3", "^1.2.3", true},
         {"1.3.3", "^1.2.3", true},
         {"1.0.3", "^1.2.3", false},
@@ -37,10 +34,12 @@ TEST_CASE("Check version compatibility") {
         {"1.2.0", "~1.2.1", false},
         {"1.3.0", "~1.2.99", false},
     }));
-    INFO("Should " << version_str << " satisfy the spec " << spec_str << " ? " << satisfied);
-    auto ver  = semver::version::parse(version_str);
-    auto spec = semver::range::parse(spec_str);
-    CHECK(spec.contains(ver) == satisfied);
+    INFO("Should " << version_str << " satisfy the spec " << range_str << " ? "
+                   << expect_satisfied);
+    auto ver    = semver::version::parse(version_str);
+    auto spec   = semver::range::parse(range_str);
+    auto actual = spec.contains(ver);
+    CHECK(actual == expect_satisfied);
 }
 
 struct version_seq {
@@ -90,7 +89,7 @@ TEST_CASE("Finding the first invalid version") {
     }));
     INFO("Checking range: " << rng_str);
     auto rng              = semver::range::parse(rng_str);
-    auto next_bad_version = rng.first_bad_version();
+    auto next_bad_version = rng.high();
     CHECK(next_bad_version == semver::version::parse(expect));
 }
 
@@ -149,8 +148,8 @@ TEST_CASE("Range union") {
         {"^1.2.0", "~1.2.3", "^1.2.0"},
         {"~1.2.0", "^1.1.9", "^1.1.9"},
         {"~1.2.0", "^1.1.9", "^1.1.9"},
-        {"^1.6.2", "4.1.2", std::nullopt},
-        {"^1.6.2", "~2.0.0", std::nullopt},
+        {"^1.6.2", "4.1.2", "1.6.2<4.1.3"},
+        {"^1.6.2", "~2.0.0", "1.6.2<2.1.0"},
         {"+1.2.0", "~1.1.3", "+1.1.3"},
         {"^1.2.0", "~1.1.0", "^1.1.0"},
         {"~1.2.4", "=1.2.4", "~1.2.4"},
@@ -185,25 +184,31 @@ TEST_CASE("Range difference") {
 
     auto [left_str, right_str, exp_before, exp_after] = GENERATE(Catch::Generators::values<case_>({
         {"1.2.3", "1.2.4", "1.2.3", std::nullopt},
-        {"^1.2.3", "1.4.6", "~1.2.3", "^1.4.7"},
-        {"^1.0.0", "~1.6.0", "~1.0.0", "^1.7.0"},
+        {"^1.2.3", "1.4.6", "1.2.3<1.4.6", "1.4.7<2.0.0"},
+        {"^1.0.0", "~1.6.0", "1.0.0<1.6.0", "1.7.0<2.0.0"},
         {"^1.2.3", "^2.3.4", "^1.2.3", std::nullopt},
         {"^1.2.3", "^0.3.4", std::nullopt, "^1.2.3"},
         {"~1.2.4", "^1.1.4", std::nullopt, std::nullopt},
-        {"~1.2.4", "^1.2.6", "=1.2.4", std::nullopt},
-        {"+1.2.3", "^3.0.0", "^1.2.3", "+4.0.0"},
-        {"^4.3.8", "+4.6.4", "~4.3.8", std::nullopt},
+        {"~1.2.4", "^1.2.6", "1.2.4<1.2.6", std::nullopt},
+        {"+1.2.3", "^3.0.0", "1.2.3<3.0.0", "+4.0.0"},
+        {"^4.3.8", "+4.6.4", "4.3.8<4.6.4", std::nullopt},
     }));
     INFO("Check difference of '" << left_str << "' and '" << right_str << "'");
     auto left            = semver::range::parse(left_str);
     auto right           = semver::range::parse(right_str);
     auto [before, after] = left.difference(right);
-    REQUIRE(before.has_value() == exp_before.has_value());
+    CHECK(before.has_value() == exp_before.has_value());
     if (before) {
+        INFO("before   = " << before->to_string());
+        REQUIRE(exp_before);
+        INFO("expected = " << *exp_before);
         CHECK(*before == semver::range::parse(*exp_before));
     }
-    REQUIRE(after.has_value() == exp_after.has_value());
+    CHECK(after.has_value() == exp_after.has_value());
     if (after) {
+        INFO("after    = " << after->to_string());
+        REQUIRE(exp_after);
+        INFO("expected = " << *exp_after);
         CHECK(*after == semver::range::parse(*exp_after));
     }
 }

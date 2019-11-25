@@ -3,6 +3,7 @@
 #include <semver/build_metadata.hpp>
 #include <semver/prerelease.hpp>
 
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -29,9 +30,18 @@ class version;
 order compare(const version& lhs, const version& rhs) noexcept;
 
 struct version {
-    int major = 0;
-    int minor = 0;
-    int patch = 0;
+    using int_type = int;
+    int_type major = 0;
+    int_type minor = 0;
+    int_type patch = 0;
+
+    static constexpr int_type component_max = std::numeric_limits<int_type>::max();
+
+    static const version& max_version() noexcept {
+        static version m{component_max, component_max, component_max};
+        return m;
+    }
+
     // Prerelease tag is optional:
     class prerelease prerelease = {};
     // Build metadata is optional:
@@ -41,6 +51,7 @@ struct version {
 
     std::string to_string() const noexcept;
     bool        is_prerelease() const noexcept { return !prerelease.empty(); }
+    version     next_after() const noexcept;
 
 #define DEF_OP(op, expr)                                                                           \
     inline friend bool operator op(const version& lhs, const version& rhs) noexcept {              \
