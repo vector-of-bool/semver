@@ -169,8 +169,24 @@ std::optional<range> range::union_(const range& other) const noexcept {
 
     auto this_first_bad_version = first_bad_version();
 
-    if (other_version >= this_first_bad_version) {
+    if (other_version > this_first_bad_version) {
         // `other` is too high. No contiguous union can be formed.
+        return std::nullopt;
+    }
+    if (other_version == this_first_bad_version) {
+        // (literal) edge case. The bottom of `other` is at the top of `this`.
+        // We may form a union as long as `other` is more lenient. Otherwise,
+        // we cannot represent such a union.
+        if (other_kind == anything_greater) {
+            // Okay: `other` starts at the end and is infinite
+            return range(this_verison, anything_greater);
+        } else if (other_kind == same_major_version && this_kind != same_major_version) {
+            assert(this_kind != anything_greater);
+            return range(this_verison, same_major_version);
+        } else if (other_kind == same_minor_version && this_kind == exact) {
+            return range(this_verison, same_minor_version);
+        }
+        // Any other union is not representable
         /**
          * Maybe you got here and you think. "Hey no! I _can_ form a contiguous range for X and Y!"
          * If you are thinking of forming a union of ^1.0.0 with ^2.0.0, to represent

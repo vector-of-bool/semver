@@ -151,6 +151,9 @@ TEST_CASE("Range union") {
         {"~1.2.0", "^1.1.9", "^1.1.9"},
         {"^1.6.2", "4.1.2", std::nullopt},
         {"^1.6.2", "~2.0.0", std::nullopt},
+        {"+1.2.0", "~1.1.3", "+1.1.3"},
+        {"^1.2.0", "~1.1.0", "^1.1.0"},
+        {"~1.2.4", "=1.2.4", "~1.2.4"},
     }));
     INFO("Checking the union of " << a_str << " with " << b_str);
     INFO("Expected union: " << expect.value_or("[nothing]"));
