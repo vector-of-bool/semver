@@ -57,7 +57,7 @@ std::string range::to_string() const noexcept {
     return ret;
 }
 
-bool range::satisfied_by(const version& ver) const noexcept {
+bool range::contains(const version& ver) const noexcept {
     if (ver.is_prerelease() != base_version().is_prerelease()) {
         // Prerelease versions shouldnt' be considered unless the spec basis
         // version is also a prerelease
@@ -202,7 +202,7 @@ std::optional<range> range::union_(const range& other) const noexcept {
     return range(this_verison, other_kind);
 }
 
-bool range::includes(const range& other) const noexcept {
+bool range::contains(const range& other) const noexcept {
     auto  other_kind    = other._kind;
     auto& other_version = other.base_version();
     auto& this_version  = base_version();
@@ -226,5 +226,5 @@ bool range::includes(const range& other) const noexcept {
 }
 
 bool range::overlaps(const range& other) const noexcept {
-    return satisfied_by(other.base_version()) || other.satisfied_by(_base_version);
+    return contains(other.base_version()) || other.contains(_base_version);
 }

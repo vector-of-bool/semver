@@ -40,10 +40,7 @@ TEST_CASE("Check version compatibility") {
     INFO("Should " << version_str << " satisfy the spec " << spec_str << " ? " << satisfied);
     auto ver  = semver::version::parse(version_str);
     auto spec = semver::range::parse(spec_str);
-    CHECK(spec.satisfied_by(ver) == satisfied);
-
-    // auto spec                       = semver::range::parse("*");
-    // CHECK(spec.satisfied_by(semver::version::parse("2.1.0")));
+    CHECK(spec.contains(ver) == satisfied);
 }
 
 struct version_seq {
@@ -227,8 +224,8 @@ TEST_CASE("Inclusion") {
         {"+1.2.3", "^1.2.0", false},
         {"+1.2.3", "~2.2.1", true},
     }));
-    INFO("Check whether range '" << outer << "' includes '" << inner << "'");
-    CHECK(semver::range::parse(outer).includes(semver::range::parse(inner)) == expect);
+    INFO("Check whether range '" << outer << "' contains '" << inner << "'");
+    CHECK(semver::range::parse(outer).contains(semver::range::parse(inner)) == expect);
 }
 
 TEST_CASE("Version overlap") {

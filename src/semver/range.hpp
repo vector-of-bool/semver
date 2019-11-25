@@ -70,19 +70,18 @@ public:
         std::terminate();
     }
 
-    bool satisfied_by(const version& ver) const noexcept;
-
     std::optional<range> intersection(const range& other) const noexcept;
     std::optional<range> union_(const range& other) const noexcept;
 
-    bool includes(const range& other) const noexcept;
+    bool contains(const range& other) const noexcept;
+    bool contains(const version& ver) const noexcept;
     bool overlaps(const range& other) const noexcept;
 
     template <typename Iter, typename Stop>
     std::optional<version> max_satisfying(Iter it, const Stop stop) const noexcept {
         std::optional<version> ret;
         for (; it != stop; ++it) {
-            if (!satisfied_by(*it)) {
+            if (!contains(*it)) {
                 continue;
             }
             if (!ret.has_value()) {
