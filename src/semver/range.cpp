@@ -97,7 +97,7 @@ bool range::contains(const version& ver) const noexcept {
 std::optional<range> range::intersection(const range& other) const noexcept {
     // First, ensure that *this has the lower basis version.
     if (other._base_version < _base_version) {
-        // Intersection is reflexive
+        // Intersection is commutative
         return other.intersection(*this);
     }
 
@@ -152,7 +152,7 @@ std::optional<range> range::intersection(const range& other) const noexcept {
 std::optional<range> range::union_(const range& other) const noexcept {
     // Ensure that we have the lower base version
     if (other.base_version() < base_version()) {
-        // Union is reflexive
+        // Union is commutative
         return other.union_(*this);
     }
 

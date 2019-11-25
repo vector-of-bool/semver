@@ -121,13 +121,13 @@ TEST_CASE("Range intersection") {
         INFO("Actual intersection:   " << intersection->to_string());
         REQUIRE(expect.has_value());
         CHECK(intersection == semver::range::parse(*expect));
-        // Check for reflexivity
+        // Check for commutativity
         CHECK(intersection == b.intersection(a));
     } else {
         INFO("Actual intersection:   [null]");
         CHECK_FALSE(expect.has_value());
         CHECK_FALSE(intersection.has_value());
-        // Check for reflexivity
+        // Check for commutativity
         CHECK(intersection == b.intersection(a));
     }
 }
@@ -164,13 +164,13 @@ TEST_CASE("Range union") {
         INFO("Actual union:   " << union_->to_string());
         REQUIRE(expect.has_value());
         CHECK(union_ == semver::range::parse(*expect));
-        // Check for reflexivity
+        // Check for commutativity
         CHECK(union_ == b.union_(a));
     } else {
         INFO("Actual union:   [null]");
         CHECK_FALSE(expect.has_value());
         CHECK_FALSE(union_.has_value());
-        // Check for reflexivity
+        // Check for commutativity
         CHECK(union_ == b.union_(a));
     }
 }
