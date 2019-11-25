@@ -19,6 +19,8 @@ public:
     auto& string() const noexcept { return _str; }
 };
 
+struct range_difference;
+
 class range {
 public:
     enum class kind_t {
@@ -72,6 +74,7 @@ public:
 
     std::optional<range> intersection(const range& other) const noexcept;
     std::optional<range> union_(const range& other) const noexcept;
+    range_difference     difference(const range& other) const noexcept;
 
     bool contains(const range& other) const noexcept;
     bool contains(const version& ver) const noexcept;
@@ -103,6 +106,11 @@ public:
     friend bool operator==(const range& lhs, const range& rhs) noexcept {
         return lhs.kind() == rhs.kind() && lhs.base_version() == rhs.base_version();
     }
+};
+
+struct range_difference {
+    std::optional<range> before;
+    std::optional<range> after;
 };
 
 }  // namespace semver

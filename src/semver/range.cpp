@@ -218,6 +218,80 @@ std::optional<range> range::union_(const range& other) const noexcept {
     return range(this_verison, other_kind);
 }
 
+namespace {
+
+std::optional<range> diff_before(const range& self, const range& other) noexcept {
+    assert(self.first_bad_version() > other.base_version());
+    if (self.base_version() >= other.base_version()) {
+        // Nothing below
+        return std::nullopt;
+    }
+
+    // Restrict ourselves to form a valid range
+    auto& this_version  = self.base_version();
+    auto& other_version = other.base_version();
+    assert(this_version <= other_version);
+
+    assert(this_version.major <= other_version.major);
+    if (this_version.major != other_version.major) {
+        return range(this_version, range::same_major_version);
+    }
+    assert(this_version.minor <= other_version.minor);
+    if (this_version.minor != other_version.minor) {
+        return range(this_version, range::same_minor_version);
+    }
+    assert(this_version.patch <= other_version.patch);
+    if (this_version.patch != other_version.patch) {
+        return range(this_version, range::exact);
+    }
+    assert(false && "Unreachable");
+    std::terminate();
+}
+
+std::optional<range> diff_after(const range& self, const range& other) noexcept {
+    assert(self.base_version() < other.first_bad_version());
+    if (self.first_bad_version() <= other.first_bad_version()) {
+        // Nothing above
+        return std::nullopt;
+    }
+
+    auto this_top  = self.first_bad_version();
+    auto other_top = other.first_bad_version();
+    assert(this_top >= other_top);
+
+    assert(this_top.major >= other_top.major);
+    if (this_top.major != other_top.major) {
+        return range(other_top, range::same_major_version);
+    }
+    assert(this_top.minor >= other_top.minor);
+    if (this_top.minor != other_top.minor) {
+        return range(other_top, range::same_minor_version);
+    }
+    assert(this_top.patch >= other_top.patch);
+    if (this_top.patch != other_top.patch) {
+        return range(other_top, range::exact);
+    }
+    assert(false && "Unreachable");
+}
+
+}  // namespace
+
+range_difference range::difference(const range& other) const noexcept {
+    if (!this->overlaps(other)) {
+        // No overlap. Nothing to remove
+        if (base_version() < other.base_version()) {
+            return {*this, std::nullopt};
+        } else {
+            assert(base_version() > other.base_version());
+            return {std::nullopt, *this};
+        }
+    }
+    return {
+        diff_before(*this, other),
+        diff_after(*this, other),
+    };
+}
+
 bool range::contains(const range& other) const noexcept {
     auto  other_kind    = other._kind;
     auto& other_version = other.base_version();

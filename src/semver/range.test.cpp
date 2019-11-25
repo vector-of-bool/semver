@@ -175,6 +175,37 @@ TEST_CASE("Range union") {
     }
 }
 
+TEST_CASE("Range difference") {
+    struct case_ {
+        std::string_view                left;
+        std::string_view                right;
+        std::optional<std::string_view> exp_before;
+        std::optional<std::string_view> exp_after;
+    };
+
+    auto [left_str, right_str, exp_before, exp_after] = GENERATE(Catch::Generators::values<case_>({
+        {"1.2.3", "1.2.4", "1.2.3", std::nullopt},
+        {"^1.2.3", "1.4.6", "~1.2.3", "^1.4.7"},
+        {"^1.0.0", "~1.6.0", "~1.0.0", "^1.7.0"},
+        {"^1.2.3", "^2.3.4", "^1.2.3", std::nullopt},
+        {"^1.2.3", "^0.3.4", std::nullopt, "^1.2.3"},
+        {"~1.2.4", "^1.1.4", std::nullopt, std::nullopt},
+        {"~1.2.4", "^1.2.6", "=1.2.4", std::nullopt},
+    }));
+    INFO("Check difference of '" << left_str << "' and '" << right_str << "'");
+    auto left            = semver::range::parse(left_str);
+    auto right           = semver::range::parse(right_str);
+    auto [before, after] = left.difference(right);
+    REQUIRE(before.has_value() == exp_before.has_value());
+    if (before) {
+        CHECK(*before == semver::range::parse(*exp_before));
+    }
+    REQUIRE(after.has_value() == exp_after.has_value());
+    if (after) {
+        CHECK(*after == semver::range::parse(*exp_after));
+    }
+}
+
 TEST_CASE("Inclusion") {
     struct case_ {
         std::string_view outer;
