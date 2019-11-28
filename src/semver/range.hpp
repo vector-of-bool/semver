@@ -33,6 +33,12 @@ public:
         assert(_high > _low && "Invalid range");
     }
 
+    static range everything() noexcept { return range(version(), version::max_version()); }
+    static range exactly(version v) noexcept {
+        auto next = v.next_after();
+        return range(std::move(v), std::move(next));
+    }
+
     static range parse(std::string_view str);
     static range parse_restricted(std::string_view str);
 
