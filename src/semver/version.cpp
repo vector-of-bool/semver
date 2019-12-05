@@ -116,6 +116,27 @@ std::string version::to_string() const noexcept {
     return main_ver;
 }
 
+version version::next_after() const noexcept {
+    assert(*this != max_version());
+    auto ret = *this;
+    if (ret.patch != component_max) {
+        ++ret.patch;
+    } else {
+        ret.patch = 0;
+        if (ret.minor != component_max) {
+            ++ret.minor;
+        } else {
+            ret.minor = 0;
+            if (ret.major != component_max) {
+                ++ret.major;
+            } else {
+                assert(false && "Cannot get next_after() of max_version()");
+            }
+        }
+    }
+    return ret;
+}
+
 order semver::compare(const version& lhs, const version& rhs) noexcept {
     auto lhs_tup = std::tie(lhs.major, lhs.minor, lhs.patch);
     auto rhs_tup = std::tie(rhs.major, rhs.minor, rhs.patch);
