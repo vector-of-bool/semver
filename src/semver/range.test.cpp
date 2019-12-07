@@ -4,6 +4,26 @@
 
 TEST_CASE("Parse a version spec string") { auto spec = semver::range::parse("1.2.3"); }
 
+TEST_CASE("Parse range specifiers") {
+    struct case_ {
+        std::string_view spec;
+        std::string_view low;
+        std::string_view high;
+    };
+    auto [spec, low_str, high_str] = GENERATE(Catch::Generators::values<case_>({
+        {"1.2.3", "1.2.3", "1.2.4"},
+        {"1.2.3<5.6.7", "1.2.3", "5.6.7"},
+        {"~1.2.3", "1.2.3", "1.3.0"},
+        {"^1.2.3", "1.2.3", "2.0.0"},
+    }));
+    INFO("Checking range string: " << spec);
+    auto low   = semver::version::parse(low_str);
+    auto high  = semver::version::parse(high_str);
+    auto range = semver::range::parse(spec);
+    CHECK(range.low() == low);
+    CHECK(range.high() == high);
+}
+
 TEST_CASE("Parse an asterisk") {
     auto spec = semver::range::parse("*");
     CHECK(spec.low() == semver::version{0, 0, 0});
