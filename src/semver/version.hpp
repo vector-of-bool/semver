@@ -4,6 +4,7 @@
 #include <semver/prerelease.hpp>
 
 #include <limits>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -69,6 +70,11 @@ struct version {
 #undef DEF_OP
 
     friend inline std::string to_string(const version& ver) noexcept { return ver.to_string(); }
+
+    friend std::ostream& operator<<(std::ostream& out, const version& ver) {
+        out << ver.to_string();
+        return out;
+    }
 };
 
 }  // namespace semver
