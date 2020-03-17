@@ -1,0 +1,6 @@
+{
+    "name": "semver",
+    "version": "0.2.2",
+    "namespace": "vob",
+    "test_driver": "Catch-Main"
+}
