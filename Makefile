@@ -2,4 +2,4 @@
 .PHONY: default
 
 default:
-	dds build -WATt :c++17:gcc-9
+	dds build -t :c++17:gcc-9

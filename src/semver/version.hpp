@@ -27,7 +27,7 @@ public:
     auto  offset() const noexcept { return _offset; }
 };
 
-class version;
+struct version;
 order compare(const version& lhs, const version& rhs) noexcept;
 
 struct version {
